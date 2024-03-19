@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sample-busybox-job-01
+  namespace: controlm-job-namespace
+spec:
+  template:
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+      - name: busybox
+        image: busybox
+        command: ["echo",  "Hello sample-busybox-job-01"]
+      restartPolicy: Never
+  backoffLimit: 4
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job.20.sec
+  namespace: controlm-job-namespace
+spec:
+  template:
+    metadata:
+        name: job.20.sec
+        labels: {
+           app: controlm,
+           controlm-order-id-internal-label : controlm.00001.1
+        }     
+    spec:
+      containers:
+      - name: ubuntu
+        image: ubuntu:latest
+        # Just spin & wait forever
+        command: [ "/bin/bash", "-c", "--" ]
+        args: [ "echo START-`date`; sleep 21; echo END-`date`" ]
+      restartPolicy: Never

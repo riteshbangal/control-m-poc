@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    type: stateful-service-ctmag-srv
+  name: controlm-statefulset-agent
+  namespace: controlm-agent-namespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      type: stateful-service-ctmag-srv
+  serviceName: ctmag
+  template:
+    metadata:
+      labels:
+        type: stateful-service-ctmag-srv
+    spec:
+      containers:
+      - env:
+        - name: PERSISTENT_VOL
+          value: /home/controlm/persistent_folder
+        - name: AAPI_END_POINT
+          value: http://127.0.0.1:80/automation-api
+        # - name: AAPI_TOKEN
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: controlm-credentials
+        #       key: AAPI_TOKEN
+        - name: AAPI_USER
+          valueFrom:
+            secretKeyRef:
+              name: controlm-credentials
+              key: AAPI_USER
+        - name: AAPI_PASS
+          valueFrom:
+            secretKeyRef:
+              name: controlm-credentials
+              key: AAPI_PASS                            
+        - name: CTM_SERVER_NAME
+          value: myctmdevservername
+        - name: PERM_HOSTS
+          value: MyPermHostNames
+        - name: CTM_HOST_NAME
+          value: MyCtmHostName
+        - name: AGENT_PORT
+          value: "7000"  # Set the desired port value
+        image: controlm/agent:latest-k8s-openjdk
+        imagePullPolicy: Always
+        name: ctmagent-container
+        ports:
+        - containerPort: 7006
+        volumeMounts:
+        - mountPath: /home/controlm/persistent_folder
+          name: pv-data
+      hostAliases:
+      - hostnames:
+        - myctmdevservername
+        ip: 0.0.0.0
+      securityContext:
+        fsGroup: 1000
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: pv-data
+        persistentVolumeClaim:
+          claimName: controlm-agent-pvc
